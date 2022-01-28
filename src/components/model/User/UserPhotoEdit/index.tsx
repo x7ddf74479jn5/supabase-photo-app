@@ -29,8 +29,8 @@ export const UserPhotoEdit: React.FC<props> = ({ photoData }) => {
     setValue,
   } = useForm<Inputs>();
 
-  const deletedLikesRef = useRef<SLikeSchema[]>([]);
-  const deletedCommentsRef = useRef<SCommentSchema[]>([]);
+  const deletedLikesRef = useRef<SLikeSchema[] | null>([]);
+  const deletedCommentsRef = useRef<SCommentSchema[] | null>([]);
   const deletedPhotoRef = useRef<SPhotoSchema | undefined>(undefined);
 
   useEffect(() => {
@@ -52,17 +52,22 @@ export const UserPhotoEdit: React.FC<props> = ({ photoData }) => {
   };
 
   const restore = async () => {
-    if (deletedLikesRef.current.length > 0) {
+    if (deletedLikesRef.current && deletedLikesRef.current.length > 0) {
       await Promise.all(deletedLikesRef.current.map((like) => restoreLike(like)));
+      deletedLikesRef.current = null;
     }
 
-    if (deletedCommentsRef.current.length > 0) {
+    if (deletedCommentsRef.current && deletedCommentsRef.current.length > 0) {
       await Promise.all(deletedCommentsRef.current.map((comment) => restoreComment(comment)));
+      deletedCommentsRef.current = null;
     }
 
     await restorePhoto(photoData);
   };
 
+  // FIXME: Supabase functionsでトランザクションを実装
+  // @see https://github.com/supabase/postgrest-js/issues/237#issuecomment-739537955
+  // @see https://supabase.com/docs/reference/javascript/rpc
   const handleDelete = async (id: number) => {
     if (!window.confirm('削除しますか？')) return;
 
@@ -80,7 +85,6 @@ export const UserPhotoEdit: React.FC<props> = ({ photoData }) => {
       console.log(error);
       toast.error('削除に失敗しました。');
 
-      // rollback
       await restore();
     }
   };
