@@ -52,17 +52,22 @@ export const UserPhotoEdit: React.FC<props> = ({ photoData }) => {
   };
 
   const restore = async () => {
-    if (deletedLikesRef.current && deletedLikesRef.current.length > 0) {
-      await Promise.all(deletedLikesRef.current.map((like) => restoreLike(like)));
-      deletedLikesRef.current = null;
-    }
+    try {
+      if (deletedLikesRef.current && deletedLikesRef.current.length > 0) {
+        await Promise.all(deletedLikesRef.current.map((like) => restoreLike(like)));
+        deletedLikesRef.current = null;
+      }
 
-    if (deletedCommentsRef.current && deletedCommentsRef.current.length > 0) {
-      await Promise.all(deletedCommentsRef.current.map((comment) => restoreComment(comment)));
-      deletedCommentsRef.current = null;
-    }
+      if (deletedCommentsRef.current && deletedCommentsRef.current.length > 0) {
+        await Promise.all(deletedCommentsRef.current.map((comment) => restoreComment(comment)));
+        deletedCommentsRef.current = null;
+      }
 
-    await restorePhoto(photoData);
+      await restorePhoto(photoData);
+    } catch (error) {
+      console.log(error);
+      toast.error('削除に失敗しました。');
+    }
   };
 
   // FIXME: Supabase functionsでトランザクションを実装
