@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 
-import { SLikeWithPhotoAndUser, Like, SLikeSchema } from '@/types';
+import { SLikeWithPhotoAndUser, Like, SLikeSchema, LikeWithPhotoAndUser } from '@/types';
 import { SUPABASE_BUCKET_LIKES_PATH } from '@/utils/constants';
 import { supabase } from '@/lib/supabaseClient';
 import { makeClientProxy } from '@/lib/supabaseClient';
@@ -20,11 +20,11 @@ export const getLikesServer = async (id: string) => {
   return await getList(() => getLikeListByUserId(id));
 };
 
-export const useLikes = (id: string) => {
-  const filter = makeFilterString<Partial<SLikeWithPhotoAndUser>>({ user_id: id });
+export const useLikes = (userId: string) => {
+  const filter = makeFilterString<Partial<LikeWithPhotoAndUser>>({ userId });
 
-  return useSWR<Like[] | undefined>(cacheKeyGenerator('likes', getLikeListByUserId.name, filter), () =>
-    getList(() => getLikeListByUserId(id))
+  return useSWR<LikeWithPhotoAndUser[] | undefined>(cacheKeyGenerator('likes', getLikeListByUserId.name, filter), () =>
+    getList(() => getLikeListByUserId(userId))
   );
 };
 

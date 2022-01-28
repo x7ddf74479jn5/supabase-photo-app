@@ -20,8 +20,8 @@ export const getPhotoServer = async (id: string) => {
   return await getItem(() => getPhotoById(id));
 };
 
-export const usePhoto = async (id: number) => {
-  const filter = makeFilterString<Partial<SPublicPhotoSchema>>({ id });
+export const usePhoto = (id: number) => {
+  const filter = makeFilterString<Partial<PublicPhoto>>({ id });
 
   return useSWR<PublicPhoto | undefined>(cacheKeyGenerator('photos', getPhotoById.name, filter), () =>
     getItem(() => getPhotoById(String(id)))
@@ -46,10 +46,8 @@ export const getPublishedPhotoListServer = async () => {
   return await getList(() => getPhotoListByIsPublished());
 };
 
-export const usePublishedPhotoList = async (id: number) => {
-  const filter = makeFilterString<Partial<SPublicPhotoSchema>>({ id });
-
-  return useSWR<PublicPhoto[] | undefined>(cacheKeyGenerator('photos', getPhotoListByIsPublished.name, filter), () =>
+export const usePublishedPhotoList = () => {
+  return useSWR<PublicPhoto[] | undefined>(cacheKeyGenerator('photos', getPhotoListByIsPublished.name), () =>
     getList(() => getPhotoListByIsPublished())
   );
 };
@@ -65,8 +63,8 @@ export const getPhotoListServer = async (id: string): Promise<PublicPhoto[] | un
   return await getList(() => getPhotoListByUserId(id));
 };
 
-export const usePhotoList = async (userId: string) => {
-  const filter = makeFilterString<Partial<SPublicPhotoSchema>>({ user_id: userId });
+export const usePhotoList = (userId: string) => {
+  const filter = makeFilterString<Partial<PublicPhoto>>({ userId });
 
   return useSWR<PublicPhoto[] | undefined>(cacheKeyGenerator('photos', getPhotoListByUserId.name, filter), () =>
     getList(() => getPhotoListByUserId(userId))

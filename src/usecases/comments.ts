@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
-import { SCommentSchema, CommentSchema } from '@/types';
-import { camelizeDeeply } from '@/utils/camerizeDeeply';
+import { SCommentSchema } from '@/types';
 import { SUPABASE_BUCKET_COMMENTS_PATH } from '@/utils/constants';
 import { localeDateNowSQL } from '@/utils/date';
 

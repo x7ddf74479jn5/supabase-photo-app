@@ -3,34 +3,12 @@ import type { GetServerSidePropsContext, NextPage } from 'next';
 
 import { DashboardLikes } from '@/components/page/DashboardLikes';
 import { Layout } from '@/components/ui/Layout';
-import { PublicPhoto } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
-import { getLikesServer } from '@/usecases/like';
+import { useLikes } from '@/usecases/like';
+import { useMemo } from 'react';
 
 export async function getServerSideProps({ req }: GetServerSidePropsContext) {
   const { user } = await supabase.auth.api.getUserByCookie(req);
-
-  const likes = user ? await getLikesServer(user.id) : [];
-
-  const publicPhotos: PublicPhoto[] = [];
-
-  async function setPublicPhotos() {
-    if (likes) {
-      for (const like of likes) {
-        publicPhotos.push({
-          id: like.photo.id,
-          title: like.photo.title,
-          url: like.photo.url,
-          isPublished: like.photo.isPublished,
-          updatedAt: like.photo.updatedAt,
-          createdAt: like.photo.createdAt,
-          user: like.user,
-          userId: like.userId,
-        });
-      }
-    }
-  }
-  await setPublicPhotos();
 
   if (!user) {
     return {
@@ -41,15 +19,33 @@ export async function getServerSideProps({ req }: GetServerSidePropsContext) {
     };
   }
   // If there is a user, return it.
-  return { props: { user, publicPhotos } };
+  return { props: { user } };
 }
 
 type props = {
   user: User;
-  publicPhotos: PublicPhoto[];
 };
 
-const DashboardLikesPage: NextPage<props> = ({ user, publicPhotos }) => {
+const DashboardLikesPage: NextPage<props> = ({ user }) => {
+  const { data: likes } = useLikes(user.id);
+
+  const publicPhotos = useMemo(() => {
+    return likes
+      ? likes.map((like) => {
+          return {
+            id: like.photo.id,
+            title: like.photo.title,
+            url: like.photo.url,
+            isPublished: like.photo.isPublished,
+            updatedAt: like.photo.updatedAt,
+            createdAt: like.photo.createdAt,
+            user: like.user,
+            userId: like.userId,
+          };
+        })
+      : [];
+  }, [likes]);
+
   return (
     <Layout>
       <DashboardLikes user={user} publicPhotos={publicPhotos} />
