@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import Image from 'next/image';
 import Router from 'next/router';
 import { toast } from 'react-toastify';
@@ -6,11 +6,9 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 
 import { Main } from '@/components/ui/Main';
 
-import { PublicPhoto, SCommentSchema, SLikeSchema, SPhotoSchema } from '@/types';
+import { PublicPhoto } from '@/types';
 
-import { deletePhoto, restorePhoto, updatePhoto } from '@/usecases/photo';
-import { deleteLikesByPhotoId, restoreLike } from '@/usecases/like';
-import { deleteCommentsByPhotoId, restoreComment } from '@/usecases/comments';
+import { deletePhoto, updatePhoto } from '@/usecases/photo';
 
 type props = {
   photoData: PublicPhoto;
@@ -29,10 +27,6 @@ export const UserPhotoEdit: React.FC<props> = ({ photoData }) => {
     setValue,
   } = useForm<Inputs>();
 
-  const deletedLikesRef = useRef<SLikeSchema[] | null>([]);
-  const deletedCommentsRef = useRef<SCommentSchema[] | null>([]);
-  const deletedPhotoRef = useRef<SPhotoSchema | undefined>(undefined);
-
   useEffect(() => {
     setValue('title', photoData.title);
     setValue('is_published', photoData.isPublished);
@@ -41,7 +35,6 @@ export const UserPhotoEdit: React.FC<props> = ({ photoData }) => {
 
   const onSubmit: SubmitHandler<Inputs> = async (data, event): Promise<void> => {
     try {
-      // レコード更新
       await updatePhoto({ ...data, id: photoData.id });
       toast.success('画像を更新しました！');
       Router.push(`/user/${photoData?.user?.id}`);
@@ -51,46 +44,16 @@ export const UserPhotoEdit: React.FC<props> = ({ photoData }) => {
     }
   };
 
-  const restore = async () => {
-    try {
-      if (deletedLikesRef.current && deletedLikesRef.current.length > 0) {
-        await Promise.all(deletedLikesRef.current.map((like) => restoreLike(like)));
-        deletedLikesRef.current = null;
-      }
-
-      if (deletedCommentsRef.current && deletedCommentsRef.current.length > 0) {
-        await Promise.all(deletedCommentsRef.current.map((comment) => restoreComment(comment)));
-        deletedCommentsRef.current = null;
-      }
-
-      await restorePhoto(photoData);
-    } catch (error) {
-      console.log(error);
-      toast.error('削除に失敗しました。');
-    }
-  };
-
-  // FIXME: Supabase functionsでトランザクションを実装
-  // @see https://github.com/supabase/postgrest-js/issues/237#issuecomment-739537955
-  // @see https://supabase.com/docs/reference/javascript/rpc
   const handleDelete = async (id: number) => {
     if (!window.confirm('削除しますか？')) return;
 
     try {
-      // まずlikes, commentsを削除
-      deletedLikesRef.current = await deleteLikesByPhotoId(id);
-      deletedCommentsRef.current = await deleteCommentsByPhotoId(id);
-
-      // レコード削除
-      const { data: deletedPhoto } = await deletePhoto(id);
-      deletedPhotoRef.current = deletedPhoto![0];
+      await deletePhoto(id);
       toast.success('削除しました');
       Router.push(`/user/${photoData?.user?.id}`);
     } catch (error) {
       console.log(error);
       toast.error('削除に失敗しました。');
-
-      await restore();
     }
   };
 
