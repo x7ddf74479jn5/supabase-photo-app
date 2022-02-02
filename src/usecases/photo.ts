@@ -9,26 +9,26 @@ import { removeBucketPath } from '@/utils/removeBucketPath';
 
 const { getItem, getList } = makeClientProxy<SPublicPhotoSchema>();
 
-const getPhotoById = async (id: string) =>
+const getPhotoByIdQuery = async (id: string) =>
   await supabase
     .from<SPublicPhotoSchema>(SUPABASE_BUCKET_PHOTOS_PATH)
     .select(`*, user: userId(*), likes(*), comments(*, user: userId(*))`)
     .eq('id', id)
     .single();
 
-export const getPhotoServer = async (id: string) => {
-  return await getItem(() => getPhotoById(id));
+export const getPhoto = async (id: string) => {
+  return await getItem(() => getPhotoByIdQuery(id));
 };
 
 export const usePhoto = (id: number) => {
   const filter = makeFilterString<Partial<PublicPhoto>>({ id });
 
-  return useSWR<PublicPhoto | undefined>(cacheKeyGenerator('photos', getPhotoById.name, filter), () =>
-    getItem(() => getPhotoById(String(id)))
+  return useSWR<PublicPhoto | undefined>(cacheKeyGenerator('photos', getPhotoByIdQuery.name, filter), () =>
+    getItem(() => getPhotoByIdQuery(String(id)))
   );
 };
 
-const getPhotoListByIsPublished = async () =>
+const getPhotoListByIsPublishedQuery = async () =>
   await supabase
     .from(SUPABASE_BUCKET_PHOTOS_PATH)
     .select(
@@ -42,13 +42,13 @@ const getPhotoListByIsPublished = async () =>
     .eq('is_published', true)
     .order('created_at', { ascending: false });
 
-export const getPublishedPhotoListServer = async () => {
-  return await getList(() => getPhotoListByIsPublished());
+export const getPublishedPhotoList = async () => {
+  return await getList(() => getPhotoListByIsPublishedQuery());
 };
 
 export const usePublishedPhotoList = () => {
-  return useSWR<PublicPhoto[] | undefined>(cacheKeyGenerator('photos', getPhotoListByIsPublished.name), () =>
-    getList(() => getPhotoListByIsPublished())
+  return useSWR<PublicPhoto[] | undefined>(cacheKeyGenerator('photos', getPhotoListByIsPublishedQuery.name), () =>
+    getList(() => getPhotoListByIsPublishedQuery())
   );
 };
 

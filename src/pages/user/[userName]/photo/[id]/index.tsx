@@ -3,10 +3,10 @@ import type { GetServerSidePropsContext, NextPage } from 'next';
 import { UserPhoto } from '@/components/model/User/UserPhoto';
 import { Layout } from '@/components/ui/Layout';
 import { PublicPhoto } from '@/types';
-import { getPhotoServer } from '@/usecases/photo';
+import { getPhoto } from '@/usecases/photo';
 
 export async function getServerSideProps({ params }: GetServerSidePropsContext) {
-  const photoData = await getPhotoServer(String(params?.id));
+  const photoData = await getPhoto(String(params?.id));
 
   if (!photoData || !photoData.isPublished) {
     return { notFound: true };

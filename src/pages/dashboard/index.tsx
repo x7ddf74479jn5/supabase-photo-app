@@ -3,11 +3,12 @@ import type { GetServerSidePropsContext, NextPage } from 'next';
 
 import { Dashboard } from '@/components/page/Dashboard';
 import { Layout } from '@/components/ui/Layout';
-import { supabase } from '@/lib/supabaseClient';
-import { usePhotoList } from '@/usecases/photo';
+import { getPublishedPhotoList } from '@/usecases/photo';
+import { getUserByCooke } from '@/usecases/authUser';
+import { PublicPhoto } from '@/types';
 
 export async function getServerSideProps({ req }: GetServerSidePropsContext) {
-  const { user } = await supabase.auth.api.getUserByCookie(req);
+  const { user } = await getUserByCooke(req);
 
   if (!user) {
     return {
@@ -18,20 +19,21 @@ export async function getServerSideProps({ req }: GetServerSidePropsContext) {
     };
   }
 
+  const publicPhotos = await getPublishedPhotoList();
+
   // If there is a user, return it.
-  return { props: { user } };
+  return { props: { user, publicPhotos } };
 }
 
 type props = {
   user: User;
+  publicPhotos: PublicPhoto[];
 };
 
-const DashboardPage: NextPage<props> = ({ user }) => {
-  const { data: publicPhotos } = usePhotoList(user.id);
-
+const DashboardPage: NextPage<props> = ({ user, publicPhotos }) => {
   return (
     <Layout>
-      <Dashboard user={user} publicPhotos={publicPhotos ?? []} />
+      <Dashboard user={user} publicPhotos={publicPhotos} />
     </Layout>
   );
 };

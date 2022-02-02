@@ -3,11 +3,11 @@ import type { GetServerSidePropsContext, NextPage } from 'next';
 import { UserPhotoNew } from '@/components/model/User';
 import { Layout } from '@/components/ui/Layout';
 import { Profile } from '@/types';
-import { supabase } from '@/lib/supabaseClient';
 import { getProfileServer } from '@/usecases/user';
+import { getUserByCooke } from '@/usecases/authUser';
 
 export async function getServerSideProps({ req, params }: GetServerSidePropsContext) {
-  const { token } = await supabase.auth.api.getUserByCookie(req);
+  const { token } = await getUserByCooke(req);
 
   if (!token) {
     return {

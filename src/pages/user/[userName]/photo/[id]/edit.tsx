@@ -3,11 +3,11 @@ import type { GetServerSidePropsContext, NextPage } from 'next';
 import { UserPhotoEdit } from '@/components/model/User';
 import { Layout } from '@/components/ui/Layout';
 import { PublicPhoto } from '@/types';
-import { supabase } from '@/lib/supabaseClient';
-import { getPhotoServer } from '@/usecases/photo';
+import { getPhoto } from '@/usecases/photo';
+import { getUserByCooke } from '@/usecases/authUser';
 
 export async function getServerSideProps({ req, params }: GetServerSidePropsContext) {
-  const { token } = await supabase.auth.api.getUserByCookie(req);
+  const { token } = await getUserByCooke(req);
 
   if (!token) {
     return {
@@ -18,7 +18,7 @@ export async function getServerSideProps({ req, params }: GetServerSidePropsCont
     };
   }
 
-  const photoData = getPhotoServer(String(params?.id));
+  const photoData = getPhoto(String(params?.id));
 
   if (!photoData) {
     return { notFound: true };

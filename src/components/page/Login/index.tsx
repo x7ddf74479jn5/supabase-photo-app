@@ -4,8 +4,8 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 
 import { useUser } from '@/hooks/useUser';
-import { supabase } from '@/lib/supabaseClient';
 import { Main } from '@/components/ui/Main';
+import { signInWithEmailAndPassword } from '@/usecases/authUser';
 
 type Inputs = {
   email: string;
@@ -24,10 +24,7 @@ export const Login: React.FC = () => {
     const { email, password } = data;
 
     try {
-      const { error } = await supabase.auth.signIn({
-        email: email,
-        password: password,
-      });
+      const { error } = await signInWithEmailAndPassword(email, password);
 
       if (error) {
         toast.error('ログインエラー。正しいメールアドレス、パスワードを入力してください。');

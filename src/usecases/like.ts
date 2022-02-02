@@ -9,22 +9,23 @@ import { camelizeDeeply } from '../utils/camerizeDeeply';
 
 const { getItem, getList } = makeClientProxy<SLikeWithPhotoAndUser>();
 
-const getLikeListByUserId = async (id: string) =>
+const getLikeListByUserIdQuery = async (id: string) =>
   await supabase
     .from<SLikeWithPhotoAndUser>(SUPABASE_BUCKET_LIKES_PATH)
     .select(`*, photo: photos(*), user: userId(*)`)
     .eq('user_id', id)
     .order('created_at', { ascending: false });
 
-export const getLikesServer = async (id: string) => {
-  return await getList(() => getLikeListByUserId(id));
+export const getLikes = async (id: string) => {
+  return await getList(() => getLikeListByUserIdQuery(id));
 };
 
 export const useLikes = (userId: string) => {
   const filter = makeFilterString<Partial<LikeWithPhotoAndUser>>({ userId });
 
-  return useSWR<LikeWithPhotoAndUser[] | undefined>(cacheKeyGenerator('likes', getLikeListByUserId.name, filter), () =>
-    getList(() => getLikeListByUserId(userId))
+  return useSWR<LikeWithPhotoAndUser[] | undefined>(
+    cacheKeyGenerator('likes', getLikeListByUserIdQuery.name, filter),
+    () => getList(() => getLikeListByUserIdQuery(userId))
   );
 };
 

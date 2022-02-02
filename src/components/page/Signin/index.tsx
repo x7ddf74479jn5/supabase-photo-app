@@ -4,8 +4,8 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 
 import { useUser } from '@/hooks/useUser';
-import { supabase } from '@/lib/supabaseClient';
 import { Main } from '@/components/ui/Main';
+import { signUpWithEmailAndPassword } from '@/usecases/authUser';
 
 type Inputs = {
   email: string;
@@ -24,10 +24,7 @@ export const Signin: React.FC = () => {
     const { email, password } = data;
 
     try {
-      await supabase.auth.signUp({
-        email: email,
-        password: password,
-      });
+      await signUpWithEmailAndPassword(email, password);
       toast.success('アカウントを作成しました！ メールアドレスを確認してください。');
       Router.push('/');
     } catch (error) {

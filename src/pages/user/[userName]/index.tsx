@@ -2,10 +2,9 @@ import type { GetServerSidePropsContext, NextPage } from 'next';
 
 import { UserDetail } from '@/components/page/User';
 import { Layout } from '@/components/ui/Layout';
-import { Profile } from '@/types';
-
+import { Profile, PublicPhoto } from '@/types';
 import { getProfileServer } from '@/usecases/user';
-import { usePhotoList } from '@/usecases/photo';
+import { getPublishedPhotoList } from '@/usecases/photo';
 
 export async function getServerSideProps({ req, params }: GetServerSidePropsContext) {
   const user = await getProfileServer(String(params?.userName));
@@ -14,18 +13,20 @@ export async function getServerSideProps({ req, params }: GetServerSidePropsCont
     return { notFound: true };
   }
 
-  return { props: { user } };
+  const publicPhotos = await getPublishedPhotoList();
+
+  return { props: { user, publicPhotos } };
 }
 
 type props = {
   user: Profile;
+  publicPhotos: PublicPhoto[];
 };
 
-const UserPage: NextPage<props> = ({ user }) => {
-  const { data: publicPhotos } = usePhotoList(user.id);
+const UserPage: NextPage<props> = ({ user, publicPhotos }) => {
   return (
     <Layout>
-      <UserDetail user={user} publicPhotos={publicPhotos ?? []} />
+      <UserDetail user={user} publicPhotos={publicPhotos} />
     </Layout>
   );
 };

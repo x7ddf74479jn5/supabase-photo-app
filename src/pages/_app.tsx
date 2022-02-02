@@ -1,11 +1,11 @@
 import '@/styles/globals.css';
+import 'react-toastify/dist/ReactToastify.css';
 
 import { Auth } from '@supabase/ui';
 import type { AppProps } from 'next/app';
-import { supabase } from '../lib/supabaseClient';
 import { ToastContainer } from 'react-toastify';
 
-import 'react-toastify/dist/ReactToastify.css';
+import { supabase } from '@/lib/supabaseClient';
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
