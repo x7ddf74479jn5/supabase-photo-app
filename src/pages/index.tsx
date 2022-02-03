@@ -1,4 +1,4 @@
-import type { GetServerSidePropsContext, NextPage } from 'next';
+import type { NextPage } from 'next';
 
 import { Top } from '@/components/page/Top';
 import { Layout } from '@/components/ui/Layout';
