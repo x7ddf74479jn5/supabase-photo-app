@@ -1,4 +1,4 @@
-import { camelizeDeeply } from '@/utils/camerizeDeeply';
+import { camelizeDeeply } from '@/utils/caseConverter';
 import { createClient, PostgrestResponse, PostgrestSingleResponse } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
