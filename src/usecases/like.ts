@@ -1,13 +1,42 @@
-import useSWR from 'swr';
+import useSWR from 'swr/immutable';
 
-import { SLikeWithPhotoAndUser, Like, SLikeSchema, LikeWithPhotoAndUser } from '@/types';
+import { SLikeWithPhotoAndUser, SLikeSchema, LikeWithPhotoAndUser } from '@/types';
 import { SUPABASE_BUCKET_LIKES_PATH } from '@/utils/constants';
 import { supabase } from '@/lib/supabaseClient';
 import { makeClientProxy } from '@/lib/supabaseClient';
 import { cacheKeyGenerator, makeFilterString } from '@/utils/cacheKeyGenerator';
-import { camelizeDeeply } from '../utils/camerizeDeeply';
+import { useMatchMutate } from '@/hooks/useMatchMutate';
 
-const { getItem, getList } = makeClientProxy<SLikeWithPhotoAndUser>();
+const queryProxy = makeClientProxy<SLikeWithPhotoAndUser>();
+const mutatorProxy = makeClientProxy<SLikeSchema>();
+
+type MutateLike = (data: any, opts?: boolean) => Promise<SLikeWithPhotoAndUser[]>;
+
+export const useLikes = (userId: string) => {
+  const filter = makeFilterString<Partial<LikeWithPhotoAndUser>>({ userId });
+
+  const { data: likes } = useSWR<LikeWithPhotoAndUser[] | undefined>(
+    cacheKeyGenerator('likes', getLikeListByUserIdQuery.name, filter),
+    () => queryProxy.getList(() => getLikeListByUserIdQuery(userId))
+  );
+
+  return likes;
+};
+
+export const useLikeMutator = () => {
+  const matchMutate = useMatchMutate();
+
+  const mutateLike = (data: any) => matchMutate(/^likes/, data);
+
+  return {
+    createLike: (data: Partial<SLikeWithPhotoAndUser>) => createLike(data, mutateLike),
+    deleteLike: (id: number) => deleteLike(id, mutateLike),
+    restoreLike: (data: Partial<SLikeWithPhotoAndUser>) => restoreLike(data, mutateLike),
+  };
+};
+
+const getLikesByPhotoIdQuery = async (photoId: number) =>
+  await supabase.from<SLikeSchema>(SUPABASE_BUCKET_LIKES_PATH).select(`*`).eq('photo_id', photoId);
 
 const getLikeListByUserIdQuery = async (id: string) =>
   await supabase
@@ -17,47 +46,51 @@ const getLikeListByUserIdQuery = async (id: string) =>
     .order('created_at', { ascending: false });
 
 export const getLikes = async (id: string) => {
-  return await getList(() => getLikeListByUserIdQuery(id));
+  return await queryProxy.getList(() => getLikeListByUserIdQuery(id));
 };
 
-export const useLikes = (userId: string) => {
-  const filter = makeFilterString<Partial<LikeWithPhotoAndUser>>({ userId });
+const createLike = async (data: Partial<SLikeSchema>, mutate: MutateLike) => {
+  const query = supabase.from<SLikeSchema>(SUPABASE_BUCKET_LIKES_PATH).insert([data]);
 
-  return useSWR<LikeWithPhotoAndUser[] | undefined>(
-    cacheKeyGenerator('likes', getLikeListByUserIdQuery.name, filter),
-    () => getList(() => getLikeListByUserIdQuery(userId))
-  );
+  const likes = await mutatorProxy.getList(async () => await query);
+
+  await mutate(likes, false);
+
+  return likes;
 };
 
-export const updateLike = async (data: Partial<SLikeSchema>) => {
-  const { data: likes } = await supabase.from<SLikeSchema>(SUPABASE_BUCKET_LIKES_PATH).insert([data]);
+const deleteLike = async (id: number, mutate: MutateLike) => {
+  const query = supabase.from<SLikeSchema>(SUPABASE_BUCKET_LIKES_PATH).delete().eq('id', id);
 
-  if (!likes) return null;
+  const deletedLikes = await mutatorProxy.getList(async () => await query);
+  const deletedLike = deletedLikes && deletedLikes[0];
 
-  return camelizeDeeply(likes);
+  await mutate((prev?: SLikeWithPhotoAndUser[]) => {
+    if (!prev) return;
+
+    return [...prev].filter((l) => {
+      return l.id !== deletedLike?.id;
+    });
+  }, false);
+
+  return deletedLike;
 };
 
-export const deleteLike = async (id: number) => {
-  return await supabase.from<SLikeSchema>(SUPABASE_BUCKET_LIKES_PATH).delete().eq('id', id);
-};
+const restoreLike = async (data: Partial<SLikeSchema>, mutate: MutateLike) => {
+  const query = supabase.from<SLikeSchema>(SUPABASE_BUCKET_LIKES_PATH).upsert(data);
 
-export const getLikesByPhotoId = async (photoId: number) =>
-  await supabase.from<SLikeSchema>(SUPABASE_BUCKET_LIKES_PATH).select(`*`).eq('photo_id', photoId);
+  const upsertedLikes = await mutatorProxy.getList(async () => await query);
+  const upsertedLike = upsertedLikes && upsertedLikes[0];
 
-export const deleteLikesByPhotoId = async (photoId: number) => {
-  const { data: likes } = await getLikesByPhotoId(photoId);
-  let _deleted: SLikeSchema[] = [];
+  await mutate((prev?: SLikeWithPhotoAndUser[]) => {
+    if (!prev) return;
 
-  if (likes) {
-    for (const like of likes) {
-      const { data: deleted } = await deleteLike(like.id);
-      deleted && _deleted.concat(deleted);
-    }
-  }
+    return [...prev].map((l) => {
+      if (l.id !== upsertedLike?.id) return l;
 
-  return _deleted;
-};
+      return upsertedLike;
+    });
+  }, false);
 
-export const restoreLike = async (data: Partial<SLikeSchema>) => {
-  await supabase.from<SLikeSchema>(SUPABASE_BUCKET_LIKES_PATH).upsert(data);
+  return upsertedLike;
 };
