@@ -96,7 +96,7 @@ export const getPhotoList = async (id: string): Promise<PublicPhoto[] | undefine
   return await getList(() => getPhotoListByUserIdQuery(id));
 };
 
-export const updatePhoto = async ({ id, ...rest }: Partial<SPhotoSchema>, mutate: MutatePublicPhoto) => {
+const updatePhoto = async ({ id, ...rest }: Partial<SPhotoSchema>, mutate?: MutatePublicPhoto) => {
   const query = supabase
     .from<SPhotoSchema>(SUPABASE_BUCKET_PHOTOS_PATH)
     .update({
@@ -108,65 +108,80 @@ export const updatePhoto = async ({ id, ...rest }: Partial<SPhotoSchema>, mutate
 
   const updatedPhoto = await getItem(async () => await query);
 
-  await mutate((prev?: PublicPhoto[]) => {
-    if (!prev) return;
+  if (mutate) {
+    await mutate((prev?: PublicPhoto[]) => {
+      if (!prev) return;
 
-    return [...prev].map((c) => {
-      if (c.id !== updatedPhoto?.id) return c;
-      return updatedPhoto;
-    });
-  }, false);
+      return [...prev].map((c) => {
+        if (c.id !== updatedPhoto?.id) return c;
+        return updatedPhoto;
+      });
+    }, false);
+  }
 
   return updatedPhoto;
 };
 
-export const deletePhoto = async (id: number, mutate: MutatePublicPhoto) => {
+const deletePhoto = async (id: number, mutate?: MutatePublicPhoto) => {
   const query = supabase.from<SPhotoSchema>(SUPABASE_BUCKET_PHOTOS_PATH).delete().eq('id', id);
 
   const deletedPhotos = await getList(async () => await query);
   const deletedPhoto = deletedPhotos && deletedPhotos[0];
 
-  await mutate((prev?: PublicPhoto[]) => {
-    if (!prev) return;
+  if (mutate) {
+    await mutate((prev?: PublicPhoto[]) => {
+      if (!prev) return;
 
-    return [...prev].filter((c) => {
-      return c.id !== deletedPhoto?.id;
-    });
-  }, false);
+      return [...prev].filter((c) => {
+        return c.id !== deletedPhoto?.id;
+      });
+    }, false);
+  }
 
   return deletedPhoto;
 };
 
-export const createPhoto = async (data: Partial<SPhotoSchema>, mutate: MutatePublicPhoto) => {
+const createPhoto = async (data: Partial<SPhotoSchema>, mutate?: MutatePublicPhoto) => {
   const query = supabase.from<SPhotoSchema>(SUPABASE_BUCKET_PHOTOS_PATH).insert([data]);
 
   const photos = await getList(async () => await query);
 
-  await mutate(photos, false);
+  if (mutate) {
+    await mutate(photos, false);
+  }
 
   return photos;
 };
 
-export const restorePhoto = async (data: Partial<SPhotoSchema>, mutate: MutatePublicPhoto) => {
+const restorePhoto = async (data: Partial<SPhotoSchema>, mutate?: MutatePublicPhoto) => {
   const query = supabase.from<SPhotoSchema>(SUPABASE_BUCKET_PHOTOS_PATH).upsert(data);
 
   const upsertedPhotos = await getList(async () => await query);
   const upsertedPhoto = upsertedPhotos && upsertedPhotos[0];
 
-  await mutate((prev?: PublicPhoto[]) => {
-    if (!prev) return;
+  if (mutate) {
+    await mutate((prev?: PublicPhoto[]) => {
+      if (!prev) return;
 
-    return [...prev].map((c) => {
-      if (c.id !== upsertedPhoto?.id) return c;
+      return [...prev].map((c) => {
+        if (c.id !== upsertedPhoto?.id) return c;
 
-      return upsertedPhoto;
-    });
-  }, false);
+        return upsertedPhoto;
+      });
+    }, false);
+  }
 
   return upsertedPhoto;
 };
 
-export const uploadPhoto = async (path: string, image: File) => {
+export const usePhotoStorage = () => {
+  return {
+    uploadPhoto,
+    getPhotoPublicURL,
+  };
+};
+
+const uploadPhoto = async (path: string, image: File) => {
   const { data } = await supabase.storage.from(SUPABASE_BUCKET_PHOTOS_PATH).upload(path, image, {
     cacheControl: '3600',
     upsert: false,
@@ -178,7 +193,7 @@ export const uploadPhoto = async (path: string, image: File) => {
 // .from() で bucket 指定しているので、getPublicUrl() に渡すパスからは、bucket 名は取り除く必要がある
 // NG: photos/25aea8bc-aa5e-42ce-b099-da8815c2a50f/fdf945886dfd
 // OK: 25aea8bc-aa5e-42ce-b099-da8815c2a50f/fdf945886dfd
-export const getPhotoPublicURL = async (key: string) => {
+const getPhotoPublicURL = async (key: string) => {
   return await supabase.storage
     .from(SUPABASE_BUCKET_PHOTOS_PATH)
     .getPublicUrl(removeBucketPath(key, SUPABASE_BUCKET_PHOTOS_PATH));

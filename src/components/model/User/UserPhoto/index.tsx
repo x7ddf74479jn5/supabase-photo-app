@@ -10,7 +10,7 @@ import { CommentList } from '@/components/model/Comment';
 import { Main } from '@/components/ui/Main';
 import { useUser } from '@/hooks/useUser';
 import { Like, PublicPhoto, SCommentSchema } from '@/types';
-import { deleteLike, updateLike } from '@/usecases/like';
+import { useLikeMutator } from '@/usecases/like';
 
 type props = {
   photoData: PublicPhoto;
@@ -18,10 +18,11 @@ type props = {
 
 export const UserPhoto: React.FC<props> = ({ photoData }) => {
   const [comment, setComment] = useState<string>('');
-  const [like, setLike] = useState<Like | null>(null);
+  const [like, setLike] = useState<Like | null>();
   const [likeCount, setLikeCount] = useState<number>(0);
 
   const { profile } = useUser();
+  const { deleteLike, createLike } = useLikeMutator();
 
   useEffect(() => {
     setLikeCount(photoData.likes && photoData.likes.length ? photoData.likes.length : 0);
@@ -90,7 +91,7 @@ export const UserPhoto: React.FC<props> = ({ photoData }) => {
         setLike(null);
         setLikeCount(likeCount - 1);
       } else {
-        const data = await updateLike({ user_id: profile.id, photo_id: photoData.id });
+        const data = await createLike({ user_id: profile.id, photo_id: photoData.id });
         setLike(data && data[0]);
         setLikeCount(likeCount + 1);
       }
@@ -98,7 +99,7 @@ export const UserPhoto: React.FC<props> = ({ photoData }) => {
       console.log(error);
       toast.error('エラーが発生しました。');
     }
-  }, [like, likeCount, photoData.id, profile]);
+  }, [createLike, deleteLike, like, likeCount, photoData.id, profile]);
 
   return (
     <Main>

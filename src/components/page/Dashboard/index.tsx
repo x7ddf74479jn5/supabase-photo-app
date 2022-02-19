@@ -5,7 +5,7 @@ import { DateTime } from 'luxon';
 import Router from 'next/router';
 
 import { Main } from '@/components/ui/Main';
-import { PublicPhoto } from '@/types/publicPhoto';
+import { PublicPhoto } from '@/types';
 import { useUser } from '@/hooks/useUser';
 
 type props = {

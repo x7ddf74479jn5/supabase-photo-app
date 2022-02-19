@@ -8,7 +8,7 @@ import { Main } from '@/components/ui/Main';
 
 import { PublicPhoto } from '@/types';
 
-import { deletePhoto, updatePhoto } from '@/usecases/photo';
+import { usePhotoMutator } from '@/usecases/photo';
 
 type props = {
   photoData: PublicPhoto;
@@ -20,6 +20,7 @@ type Inputs = {
 };
 
 export const UserPhotoEdit: React.FC<props> = ({ photoData }) => {
+  const { deletePhoto, updatePhoto } = usePhotoMutator();
   const {
     register,
     handleSubmit,

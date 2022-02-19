@@ -39,16 +39,18 @@ export const getProfile = async (id: string) => {
   return await getItem(() => getProfileByIdQuery(id));
 };
 
-export const updateProfile = async ({ id, ...payload }: Partial<SProfileSchema>, mutate: MutateProfile) => {
+export const updateProfile = async ({ id, ...payload }: Partial<SProfileSchema>, mutate?: MutateProfile) => {
   const query = supabase.from<SProfileSchema>(SUPABASE_BUCKET_USERS_PATH).update(payload).match({ id }).single();
 
   const updatedProfile = await getItem(async () => await query);
 
-  await mutate((prev?: Profile) => {
-    if (!prev) return;
+  if (mutate) {
+    await mutate((prev?: Profile) => {
+      if (!prev) return;
 
-    return { ...prev, ...updateProfile };
-  }, false);
+      return { ...prev, ...updateProfile };
+    }, false);
+  }
 
   return updatedProfile;
 };

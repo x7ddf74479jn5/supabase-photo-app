@@ -8,7 +8,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { Profile } from '@/types';
 import { Main } from '@/components/ui/Main';
 
-import { createPhoto, getPhotoPublicURL, uploadPhoto } from '@/usecases/photo';
+import { usePhotoMutator, usePhotoStorage } from '@/usecases/photo';
 
 type props = {
   user: Profile;
@@ -21,6 +21,8 @@ type Inputs = {
 };
 
 export const UserPhotoNew: React.FC<props> = ({ user }) => {
+  const { createPhoto } = usePhotoMutator();
+  const { uploadPhoto, getPhotoPublicURL } = usePhotoStorage();
   const {
     register,
     handleSubmit,
@@ -61,7 +63,7 @@ export const UserPhotoNew: React.FC<props> = ({ user }) => {
 
     try {
       // storage に画像をアップロード
-      const { data: inputData } = await uploadPhoto(`${user.id}/${newImageKey}`, newImage);
+      const inputData = await uploadPhoto(`${user.id}/${newImageKey}`, newImage);
 
       const key = inputData?.Key;
 

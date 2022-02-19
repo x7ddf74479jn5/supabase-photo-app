@@ -3,11 +3,11 @@ import type { GetServerSidePropsContext, NextPage } from 'next';
 import { UserDetail } from '@/components/page/User';
 import { Layout } from '@/components/ui/Layout';
 import { Profile, PublicPhoto } from '@/types';
-import { getProfileServer } from '@/usecases/user';
+import { getProfile } from '@/usecases/user';
 import { getPublishedPhotoList } from '@/usecases/photo';
 
 export async function getServerSideProps({ req, params }: GetServerSidePropsContext) {
-  const user = await getProfileServer(String(params?.userName));
+  const user = await getProfile(String(params?.userName));
 
   if (!user) {
     return { notFound: true };

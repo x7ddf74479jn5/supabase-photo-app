@@ -5,7 +5,7 @@ import { Layout } from '@/components/ui/Layout';
 import { usePublishedPhotoList } from '@/usecases/photo';
 
 const Home: NextPage = ({}) => {
-  const { data: publicPhotos } = usePublishedPhotoList();
+  const publicPhotos = usePublishedPhotoList();
 
   return (
     <Layout>

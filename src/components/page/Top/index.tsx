@@ -4,7 +4,7 @@ import React from 'react';
 import { DateTime } from 'luxon';
 import { AiOutlineHeart, AiFillHeart } from 'react-icons/ai';
 
-import { PublicPhoto } from '@/types/publicPhoto';
+import { PublicPhoto } from '@/types';
 import { Main } from '@/components/ui/Main';
 
 type props = {

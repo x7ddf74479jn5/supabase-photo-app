@@ -3,12 +3,13 @@ import { Auth } from '@supabase/ui';
 import { useEffect } from 'react';
 import { toast } from 'react-toastify';
 
-import { useProfile, updateNickname as _updateNickname } from '@/usecases/user';
+import { useProfile, useProfileMutator } from '@/usecases/user';
 import { listenAuthState, signInWithGoogle as _signInWithGoogle, signOut as _signOut } from '@/usecases/authUser';
 
 const useUser = () => {
   const { user, session } = Auth.useUser();
-  const { data: profile, mutate } = useProfile(session?.user?.id);
+  const profile = useProfile(session?.user?.id);
+  const { updateProfile } = useProfileMutator();
 
   useEffect(() => {
     const authListener = listenAuthState();
@@ -34,8 +35,7 @@ const useUser = () => {
       return;
     }
 
-    const newUser = await _updateNickname(user?.id, nickname);
-    mutate(newUser);
+    await updateProfile({ id: user?.id, nickname });
     toast.success('ニックネームを更新しました！');
     Router.push('/account');
   };

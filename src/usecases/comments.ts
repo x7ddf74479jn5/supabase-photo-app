@@ -38,17 +38,19 @@ export const useCommentMutator = () => {
 const getCommentsByPhotoIdQuery = async (photoId: number) =>
   await supabase.from<SCommentSchema>(SUPABASE_BUCKET_COMMENTS_PATH).select(`*`).eq('photo_id', photoId);
 
-const createComment = async (sendData: Partial<SCommentSchema>, mutate: MutateComment) => {
+export const createComment = async (sendData: Partial<SCommentSchema>, mutate?: MutateComment) => {
   const query = supabase.from<SCommentSchema>(SUPABASE_BUCKET_COMMENTS_PATH).insert([sendData]);
 
   const comments = await getList(async () => await query);
 
-  await mutate(comments, false);
+  if (mutate) {
+    await mutate(comments, false);
+  }
 
   return comments;
 };
 
-const updateComment = async ({ id, body }: Partial<SCommentSchema>, mutate: MutateComment) => {
+export const updateComment = async ({ id, body }: Partial<SCommentSchema>, mutate?: MutateComment) => {
   const query = supabase
     .from<SCommentSchema>(SUPABASE_BUCKET_COMMENTS_PATH)
     .update({ body, is_edited: true, updated_at: localeDateNowSQL() })
@@ -57,50 +59,55 @@ const updateComment = async ({ id, body }: Partial<SCommentSchema>, mutate: Muta
 
   const updatedComment = await getItem(async () => await query);
 
-  await mutate((prev?: Comment[]) => {
-    if (!prev) return;
+  if (mutate) {
+    await mutate((prev?: Comment[]) => {
+      if (!prev) return;
 
-    return [...prev].map((c) => {
-      if (c.id !== updatedComment?.id) return c;
-      return updatedComment;
-    });
-  }, false);
-
+      return [...prev].map((c) => {
+        if (c.id !== updatedComment?.id) return c;
+        return updatedComment;
+      });
+    }, false);
+  }
   return updatedComment;
 };
 
-const deleteComment = async (id: number, mutate: MutateComment) => {
+export const deleteComment = async (id: number, mutate?: MutateComment) => {
   const query = supabase.from<SCommentSchema>(SUPABASE_BUCKET_COMMENTS_PATH).delete().eq('id', id);
 
   const deletedComments = await getList(async () => await query);
   const deletedComment = deletedComments && deletedComments[0];
 
-  await mutate((prev?: Comment[]) => {
-    if (!prev) return;
+  if (mutate) {
+    await mutate((prev?: Comment[]) => {
+      if (!prev) return;
 
-    return [...prev].filter((c) => {
-      return c.id !== deletedComment?.id;
-    });
-  }, false);
+      return [...prev].filter((c) => {
+        return c.id !== deletedComment?.id;
+      });
+    }, false);
+  }
 
   return deletedComment;
 };
 
-const restoreComment = async (data: Partial<SCommentSchema>, mutate: MutateComment) => {
+const restoreComment = async (data: Partial<SCommentSchema>, mutate?: MutateComment) => {
   const query = supabase.from<SCommentSchema>(SUPABASE_BUCKET_COMMENTS_PATH).upsert(data);
 
   const upsertedComments = await getList(async () => await query);
   const upsertedComment = upsertedComments && upsertedComments[0];
 
-  await mutate((prev?: Comment[]) => {
-    if (!prev) return;
+  if (mutate) {
+    await mutate((prev?: Comment[]) => {
+      if (!prev) return;
 
-    return [...prev].map((c) => {
-      if (c.id !== upsertedComment?.id) return c;
+      return [...prev].map((c) => {
+        if (c.id !== upsertedComment?.id) return c;
 
-      return upsertedComment;
-    });
-  }, false);
+        return upsertedComment;
+      });
+    }, false);
+  }
 
   return upsertedComment;
 };

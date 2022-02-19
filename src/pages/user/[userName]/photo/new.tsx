@@ -3,7 +3,7 @@ import type { GetServerSidePropsContext, NextPage } from 'next';
 import { UserPhotoNew } from '@/components/model/User';
 import { Layout } from '@/components/ui/Layout';
 import { Profile } from '@/types';
-import { getProfileServer } from '@/usecases/user';
+import { getProfile } from '@/usecases/user';
 import { getUserByCooke } from '@/usecases/authUser';
 
 export async function getServerSideProps({ req, params }: GetServerSidePropsContext) {
@@ -18,7 +18,7 @@ export async function getServerSideProps({ req, params }: GetServerSidePropsCont
     };
   }
 
-  const user = await getProfileServer(String(params?.userName));
+  const user = await getProfile(String(params?.userName));
 
   if (!user) {
     return { notFound: true };

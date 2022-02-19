@@ -49,48 +49,54 @@ export const getLikes = async (id: string) => {
   return await queryProxy.getList(() => getLikeListByUserIdQuery(id));
 };
 
-const createLike = async (data: Partial<SLikeSchema>, mutate: MutateLike) => {
+const createLike = async (data: Partial<SLikeSchema>, mutate?: MutateLike) => {
   const query = supabase.from<SLikeSchema>(SUPABASE_BUCKET_LIKES_PATH).insert([data]);
 
   const likes = await mutatorProxy.getList(async () => await query);
 
-  await mutate(likes, false);
+  if (mutate) {
+    await mutate(likes, false);
+  }
 
   return likes;
 };
 
-const deleteLike = async (id: number, mutate: MutateLike) => {
+const deleteLike = async (id: number, mutate?: MutateLike) => {
   const query = supabase.from<SLikeSchema>(SUPABASE_BUCKET_LIKES_PATH).delete().eq('id', id);
 
   const deletedLikes = await mutatorProxy.getList(async () => await query);
   const deletedLike = deletedLikes && deletedLikes[0];
 
-  await mutate((prev?: SLikeWithPhotoAndUser[]) => {
-    if (!prev) return;
+  if (mutate) {
+    await mutate((prev?: SLikeWithPhotoAndUser[]) => {
+      if (!prev) return;
 
-    return [...prev].filter((l) => {
-      return l.id !== deletedLike?.id;
-    });
-  }, false);
+      return [...prev].filter((l) => {
+        return l.id !== deletedLike?.id;
+      });
+    }, false);
+  }
 
   return deletedLike;
 };
 
-const restoreLike = async (data: Partial<SLikeSchema>, mutate: MutateLike) => {
+const restoreLike = async (data: Partial<SLikeSchema>, mutate?: MutateLike) => {
   const query = supabase.from<SLikeSchema>(SUPABASE_BUCKET_LIKES_PATH).upsert(data);
 
   const upsertedLikes = await mutatorProxy.getList(async () => await query);
   const upsertedLike = upsertedLikes && upsertedLikes[0];
 
-  await mutate((prev?: SLikeWithPhotoAndUser[]) => {
-    if (!prev) return;
+  if (mutate) {
+    await mutate((prev?: SLikeWithPhotoAndUser[]) => {
+      if (!prev) return;
 
-    return [...prev].map((l) => {
-      if (l.id !== upsertedLike?.id) return l;
+      return [...prev].map((l) => {
+        if (l.id !== upsertedLike?.id) return l;
 
-      return upsertedLike;
-    });
-  }, false);
+        return upsertedLike;
+      });
+    }, false);
+  }
 
   return upsertedLike;
 };
